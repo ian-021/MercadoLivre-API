@@ -1,0 +1,19 @@
+{
+  "name": "producthunt",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@scrapechain/oxylabs": "^0.2.7",
+    "axios": "^1.12.1",
+    "cheerio": "^1.1.2",
+    "express": "^5.1.0",
+    "scrapechain": "^0.1.5"
+  }
+}
