@@ -1,17 +1,24 @@
-import { OxylabsResidentialProxy } from '@scrapechain/oxylabs';
-import {ScrapeChain} from 'scrapechain';
+import axios from 'axios';
 import {load} from 'cheerio';
 import express from 'express';
 
-const scraper = new ScrapeChain();
 
 async function searchMercadoLivre(query: string) {
   try {
+    const pathQuery = query.replace(/\s+/g, '-').toLowerCase();
     const encodedQuery = encodeURIComponent(query);
-    const url = `https://lista.mercadolivre.com.br/${encodedQuery.replace(/%20/g, '-')}#D[A:${encodedQuery}]`;
+    const url = `https://lista.mercadolivre.com.br/${pathQuery}#D[A:${encodedQuery}]`;
+    console.log(url);
 
     console.log(`Scraping: ${url}`);
-    const html = await scraper.scrapeHttp(url);
+    const response = await axios.get(url, {
+      headers: {
+        "Cookie": `LAST_SEARCH=${pathQuery}`
+      }
+    });
+    const html = response.data;
+
+    console.log(`LAST_SEARCH=${pathQuery}`);
 
     const $ = load(html);
     const items = $(".ui-search-layout__item");
@@ -29,6 +36,8 @@ async function searchMercadoLivre(query: string) {
       };
     }).get();
 
+
+
     return extractedData;
   } catch (error) {
     console.error('Error scraping MercadoLivre:', error);
@@ -42,12 +51,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 app.get('/', async (_req, res) => {
-  try {
-    const defaultData = await searchMercadoLivre('iphone x');
-    res.json(defaultData);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch default data' });
-  }
+  res.json({ message: 'MercadoLivre Scraper API is running!' });
 });
 
 app.get('/searchByQuery', async (req, res) => {
