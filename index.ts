@@ -1,7 +1,9 @@
 import axios from 'axios';
 import {load} from 'cheerio';
 import express from 'express';
+import { ZenRows } from 'zenrows';
 
+const ZENROWS_API_KEY = process.env.ZENROWS_API_KEY;
 
 async function searchMercadoLivre(query: string) {
   try {
@@ -11,16 +13,19 @@ async function searchMercadoLivre(query: string) {
     console.log(url);
 
     console.log(`Scraping: ${url}`);
-    const response = await axios.get(url, {
+
+    const client = new ZenRows(ZENROWS_API_KEY);
+    const zenrows_response = await client.get(url, {
       headers: {
         "Cookie": `LAST_SEARCH=${pathQuery}`
       }
     });
-    const html = response.data;
 
+    const raw_data = await zenrows_response.text();
+    console.log(raw_data)
     console.log(`LAST_SEARCH=${pathQuery}`);
 
-    const $ = load(html);
+    const $ = load(raw_data);
     const items = $(".ui-search-layout__item");
 
     const extractedData = items.map((index, element) => {
@@ -44,7 +49,6 @@ async function searchMercadoLivre(query: string) {
     throw error;
   }
 }
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -80,7 +84,46 @@ app.get('/searchByQuery', async (req, res) => {
   }
 });
 
+async function stress() {
+  const query = 'iphone';
+  const url = `http://localhost:${PORT}/searchByQuery?query=${query}`;
+  const requests = [];
+
+  console.log(`Starting stress test: sending ${query} query 500 times...`);
+  const startTime = Date.now();
+
+  for (let i = 0; i < 500; i++) {
+    requests.push(
+      axios.get(url)
+        .then(response => ({ success: true, status: response.status, index: i }))
+        .catch(error => ({ success: false, error: error.message, index: i }))
+    );
+  }
+
+  const results = await Promise.all(requests);
+  const endTime = Date.now();
+
+  const successful = results.filter(r => r.success).length;
+  const failed = results.filter(r => !r.success).length;
+
+  console.log(`\nStress test completed in ${endTime - startTime}ms`);
+  console.log(`Total requests: 500`);
+  console.log(`Successful: ${successful}`);
+  console.log(`Failed: ${failed}`);
+  console.log(`Success rate: ${(successful / 500 * 100).toFixed(2)}%`);
+
+  if (failed > 0) {
+    console.log('\nFailed requests:');
+    results.filter(r => !r.success).forEach(r => {
+      console.log(`Request ${r.index}: ${r.error}`);
+    });
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Test the search endpoint: http://localhost:${PORT}/searchByQuery?query=iphone`);
+  console.log(`To run stress test, call stress() function`);
 });
+
+stress()
