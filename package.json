@@ -13,6 +13,7 @@
     "@scrapechain/oxylabs": "^0.2.7",
     "axios": "^1.12.1",
     "cheerio": "^1.1.2",
+    "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "scrapechain": "^0.1.5"
   }
