@@ -22,10 +22,10 @@ function findAttributeByMultipleSelectors($element: any, selectors: string[], at
   return null;
 }
 
-export async function searchMercadoLivre(query: string): Promise<ProductItem[]> {
+export async function searchMercadoLivre(query: string, page: number = 1, limit: number = 50): Promise<ProductItem[]> {
   try {
     const pathQuery = formatPathQuery(query);
-    const url = buildMercadoLivreUrl(query);
+    const url = buildMercadoLivreUrl(query, page, limit);
     const headers = buildHeaders(pathQuery);
 
     console.log(`Scraping: ${url}`);
